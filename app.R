@@ -25,10 +25,10 @@ ui = dashboardPage(
     sliderInput("alpha", label="Transparency:", min=0, max=1, value=1, step=0.1, ticks=FALSE),
     hr(),
     selectInput("factors", label = "Select features:", multiple=TRUE, choices = names(factors)[3:22], selected=c('merge100_pct','elev_median','elev_sd','forest_pct','water_pct')),
-    sliderInput("clusters", label="Number of clusters:", min=0, max=20, value=3, ticks=FALSE),
+    sliderInput("clusters", label="Number of clusters:", min=0, max=20, value=4, ticks=FALSE),
     actionButton("clustButton", "Generate clusters"),
     hr(),
-    sliderInput("size", label="Sample size per strata:", min=0, max=100, value=10, step=5, ticks=FALSE),
+    sliderInput("size", label="Sample size per strata:", min=0, max=100, value=25, step=5, ticks=FALSE),
     actionButton("goButton", "Select random grids")
   ),
   dashboardBody(
@@ -38,7 +38,8 @@ ui = dashboardPage(
                 tabBox(
                     id = "one", width="12",
                     tabPanel("Mapview", leafletOutput("map1", height=900)),
-                    tabPanel("Clusters", DT::dataTableOutput("tab1"))#pre(includeText("bc10.txt")))
+                    tabPanel("Clusters", DT::dataTableOutput("tab1")),#pre(includeText("bc10.txt")))
+                    tabPanel("Similarity", DT::dataTableOutput("tab2"))#pre(includeText("bc10.txt")))
                 )
             )
         )
@@ -50,16 +51,16 @@ server = function(input, output) {
 
     n1 <- eventReactive(input$goButton, {
         n = sample_n(clusters(), input$size*as.numeric(input$clusters))
-        nn <- tibble(type="simple", id=pull(n, id))
-        readr::write_csv(nn, paste0('samples/simple_random_c',input$clusters,'_n',input$size,'.csv'))
-        n
+        #nn <- tibble(type="simple", id=pull(n, id))
+        #readr::write_csv(nn, paste0('samples/simple_random_c',input$clusters,'_n',input$size,'.csv'))
+        #n
     })
 
     n2 <- eventReactive(input$goButton, {
         n <- group_by(clusters(), clusters) %>% sample_n(size=input$size)
-        nn <- tibble(type="stratified", id=pull(n, id))
-        readr::write_csv(nn, paste0('samples/stratified_random_c',input$clusters,'_n',input$size,'.csv'))
-        n
+        #nn <- tibble(type="stratified", id=pull(n, id))
+        #readr::write_csv(nn, paste0('samples/stratified_random_c',input$clusters,'_n',input$size,'.csv'))
+        #n
     })
 
     clusters <- eventReactive(input$clustButton, {
@@ -130,6 +131,49 @@ server = function(input, output) {
 	output$tab1 <- DT::renderDataTable({
         x = dta1() #%>% filter(!Attribute %in% casVars)
 		datatable(x, rownames=F, options=list(dom = 'tip', scrollX = TRUE, scrollY = TRUE, pageLength = 25), class="compact")
+    })
+
+    #dta2 <- reactive({
+    #})
+
+    output$tab2 <- DT::renderDataTable({
+        simple <- tibble(type="simple", id=pull(n1(), id)) %>%
+            left_join(factors)
+
+        stratified <- tibble(type="stratified", id=pull(n2(), id)) %>%
+            left_join(factors)
+
+        ks_simple <- tibble(type="simple",
+            merge100_pct = ks.test(factors$merge100_pct, simple$merge100_pct)[[1]],
+            #merge500_pct = ks.test(factors$merge500_pct, simple$merge500_pct)[[1]],
+            placer_pct = ks.test(factors$placer_pct, simple$placer_pct)[[1]],
+            quartz_pct = ks.test(factors$quartz_pct, simple$quartz_pct)[[1]],
+            recent_fires_pct = ks.test(factors$recent_fires_pct, simple$recent_fires_pct)[[1]],
+            benchmark_pct = ks.test(factors$benchmark_pct, simple$benchmark_pct)[[1]],
+            elev_median = ks.test(factors$elev_median, simple$elev_median)[[1]],
+            elev_sd = ks.test(factors$elev_sd, simple$elev_sd)[[1]],
+            forest_pct = ks.test(factors$forest_pct, simple$forest_pct)[[1]],
+            wetland_pct = ks.test(factors$wetland_pct, simple$wetland_pct)[[1]],
+            water_pct = ks.test(factors$water_pct, simple$water_pct)[[1]])
+
+        ks_stratified <- tibble(type="stratified",
+            merge100_pct = ks.test(factors$merge100_pct, stratified$merge100_pct)[[1]],
+            #merge500_pct = ks.test(factors$merge500_pct, stratified$merge500_pct)[[1]],
+            placer_pct = ks.test(factors$placer_pct, stratified$placer_pct)[[1]],
+            quartz_pct = ks.test(factors$quartz_pct, stratified$quartz_pct)[[1]],
+            recent_fires_pct = ks.test(factors$recent_fires_pct, stratified$recent_fires_pct)[[1]],
+            benchmark_pct = ks.test(factors$benchmark_pct, stratified$benchmark_pct)[[1]],
+            elev_median = ks.test(factors$elev_median, stratified$elev_median)[[1]],
+            elev_sd = ks.test(factors$elev_sd, stratified$elev_sd)[[1]],
+            forest_pct = ks.test(factors$forest_pct, stratified$forest_pct)[[1]],
+            wetland_pct = ks.test(factors$wetland_pct, stratified$wetland_pct)[[1]],
+            water_pct = ks.test(factors$water_pct, stratified$water_pct)[[1]])
+        
+        ks <- rbind(ks_simple, ks_stratified)
+
+        datatable(ks, rownames=F, options=list(dom = 'tip', scrollX = TRUE, scrollY = TRUE, pageLength = 25), class="compact") %>%
+            formatRound(columns=c('merge100_pct','placer_pct','quartz_pct','recent_fires_pct','benchmark_pct','elev_median','elev_sd',
+                'forest_pct','wetland_pct','water_pct'), digits=3)
     })
 
 }
