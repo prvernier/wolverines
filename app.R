@@ -113,12 +113,12 @@ server <- function(input, output) {
   n1 <- eventReactive(input$goButton, {
     # sample from clusters() (defined above), number to be samples is number of 
     #   samples per cluster * number of clusters
-    n <- sample_n(clusters, input$size * as.numeric(input$clusters))
+    n <- sample_n(clusters(), input$size * as.numeric(input$clusters))
   })
   
   # n2 is stratified random sampling; ie same number sampled from each cluster
   n2 <- eventReactive(input$goButton, {
-    n <- clusters %>%
+    n <- clusters() %>%
       group_by(clusters) %>%
       sample_n(size = input$size)
   })
@@ -144,7 +144,7 @@ server <- function(input, output) {
     
     # If the user clicks the button to generate clusters
     if (input$clustButton) {
-      m <- tm_shape(clusters) + tm_fill('clusters', palette = 'Set1',
+      m <- tm_shape(clusters()) + tm_fill('clusters', palette = 'Set1',
                                         alpha = 1,
                                         group = 'Clusters',
                                         # zindex determines the order that elements
@@ -205,7 +205,7 @@ server <- function(input, output) {
     
     if (input$clustButton > 0) {
       # create new layers for clusters/factors with alpha specified
-      m1 <- tm_shape(clusters) + tm_fill('clusters', palette = 'Set1',
+      m1 <- tm_shape(clusters()) + tm_fill('clusters', palette = 'Set1',
                                               alpha = input$alpha,
                                               group = 'Clusters',
                                               zindex = 500)
