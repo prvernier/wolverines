@@ -1,3 +1,16 @@
+# This is similar to isTruthy, but tailored to shiny
+valid <- function(x) {
+  if (
+    is.null(x) |
+    is.na(x) |
+    x == '' |
+    x == 'NA' |
+    x == 'NULL' |
+    length(x) == 0
+  ) return(FALSE) 
+  else return(TRUE)
+}
+
 # load data into reactiveValues object
 # This is essentially a list that can be passed into other functions
 load.data <- function() {
@@ -71,6 +84,10 @@ create.clusters <- function(input, session, data) {
 }
 
 render.map1 <- function(input, output, session, data) {
+  if(!valid(input$inv)) {
+    print('returning from render.map1 early')
+    return()
+  } 
   # print('in render.map1')
   output$map1 <- renderTmap({
     # Set color palette based on selected characteristics

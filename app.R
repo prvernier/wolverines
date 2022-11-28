@@ -38,26 +38,26 @@ ui = dashboardPage(
     
     # Select feature type (merge_100, percent_forest, etc) to view
     selectInput("inv", label = "Feature type:", 
-                choices = names(factors)[3:22],
-                selected = 'merge_100'),
+                # choices = names(factors)[3:22],
+                # selected = 'merge_100'),
                 # choices defined server side 
-                # choices = NULL,
-                # selected = NULL),
+                choices = NULL,
+                selected = NULL),
     # Style for binning cells for display
     selectInput("style", label="Select style:", 
                 choices=c("jenks","kmeans","quantile","pretty","equal"), 
-                selected="quantile"),
+                selected="quantile"), 
     # Set transparency
     sliderInput("alpha", label="Transparency:", min=0, max=1, value=1, step=0.1, 
                 ticks=FALSE),
     hr(),
     # features to cluster by
     selectInput("factors", label = "Select features:", multiple=TRUE,
-                choices = names(factors)[3:22],
-                selected=c('merge100_pct','elev_median','elev_sd','forest_pct',
-                           'water_pct')
-                # choices = NULL,
-                # selected = NULL
+                # choices = names(factors)[3:22],
+                # selected=c('merge100_pct','elev_median','elev_sd','forest_pct',
+                #            'water_pct')
+                choices = NULL,
+                selected = NULL
                ),
     # how many clusters
     sliderInput("clusters", label="Number of clusters:", min=0, max=20, value=4, 
