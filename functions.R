@@ -138,17 +138,32 @@ render.map1 <- function(input, output, session, data) {
       tm_shape(data$areal) + tm_fill(col = 'red',
                                      alpha = 1,
                                      group = 'arealfeat', zindex = 570) +
-      tm_shape(data$thtt) + tm_borders(col = 'black', 
-                                      alpha = 1,
-                                      group = 'thtt') +
-      tm_shape(data$th_settlement) + tm_fill(col = 'black', 
+      tm_shape(data$thtt) + tm_borders(col = 'black',
+                                       alpha = 1,
+                                       zindex = 990) +
+      tm_shape(data$th_settlement) + tm_fill(col = 'blue', 
                                              alpha = .5,
                                              zindex = 1000)
-
+    
+    observeEvent(input$th.settlement, ignoreInit = T, {
+      print('settlement button clicked')
+      if (input$th.settlement) {
+        tmapProxy('map1', 
+                  x = {tm_shape(data$th_settlement) + 
+                       tm_fill(col = 'blue', 
+                               alpha = .5,
+                               zindex = 1000)
+                      })
+      } else {
+        tmapProxy('map1',
+                  x = {tm_remove_layer(1000)})
+      }
+    })
+    
     # print('added linear and areal features')
-    if (input$goButton) {
-      
-    }
+    # if (input$goButton) {
+    #   
+    # }
     m <- m + tm_legend(position = c('right', 'top'), frame = T)
     # print('reached end of tmap rendering')
     m
@@ -200,10 +215,10 @@ update.transparency <- function(input, session, data) {
                                 group = 'arealfeat', zindex = 570)
     tmapProxy('map1',
               x = {tm_remove_layer(500) +
-                  tm_remove_layer(560) +
-                  tm_remove_layer(570) +
-                  m.linareal +
-                  m1}
+                   tm_remove_layer(560) +
+                   tm_remove_layer(570) +
+                   m.linareal +
+                   m1}
     ) # tmapProxy 
   }) # observeEvent
   # shinybusy::remove_modal_spinner()

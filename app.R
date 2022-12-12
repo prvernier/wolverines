@@ -36,6 +36,9 @@ ui = dashboardPage(
       menuItem('Survey Factors', tabName = 'fri', icon = icon('th'))
     ), # sidebarMenu
     
+    #### Survey Factors 
+    ####
+    
     # Select feature type (merge_100, percent_forest, etc) to view
     selectInput("inv", label = "Feature type:", 
                 # choices = names(factors)[3:22],
@@ -59,12 +62,22 @@ ui = dashboardPage(
                 choices = NULL,
                 selected = NULL
                ),
+    
+    checkboxInput('th.settlement', label = 'Show TH Settlement Lands',
+                  value = T
+                 ),
+    
+    #### Clusters 
+    ####
     # how many clusters
     sliderInput("clusters", label="Number of clusters:", min=0, max=20, value=4, 
                 ticks=FALSE),
     # button to generate clusters
     actionButton("clustButton", "Generate clusters"),
     hr(),
+    
+    #### Site Selection
+    #### 
     
     # select random sites
     # slider for how many cells to select from each bin
