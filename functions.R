@@ -18,7 +18,11 @@ load.data <- function() {
     grid = st_read('data/wolverines.gpkg', 'grid5k', quiet = T),
     linear = st_read('data/wolverines.gpkg', 'linear_features', quiet = T),
     areal = st_read("data/wolverines.gpkg", "areal_features", quiet=T),
-    factors = st_read("data/wolverines.gpkg", "survey_factors", quiet=T)
+    factors = st_read("data/wolverines.gpkg", "survey_factors", quiet=T),
+    # Trondek Hwechin Traditional Territory
+    thtt = st_read('data/wolverines.gpkg', 'TH_trad_territ', quiet = T),
+    # And settlement lands
+    th_settlement = st_read('data/wolverines.gpkg', 'th_settlement_land', quiet = T)
   )
   
   return(data)
@@ -131,9 +135,15 @@ render.map1 <- function(input, output, session, data) {
       tm_shape(data$linear) + tm_lines(col = 'black',
                                        alpha = 1,
                                        group = 'linfeat', zindex = 560) +
-      tm_shape(data$areal)  + tm_fill(col = 'red',
+      tm_shape(data$areal) + tm_fill(col = 'red',
+                                     alpha = 1,
+                                     group = 'arealfeat', zindex = 570) +
+      tm_shape(data$thtt) + tm_borders(col = 'black', 
                                       alpha = 1,
-                                      group = 'arealfeat', zindex = 570)
+                                      group = 'thtt') +
+      tm_shape(data$th_settlement) + tm_fill(col = 'black', 
+                                             alpha = .5,
+                                             zindex = 1000)
 
     # print('added linear and areal features')
     if (input$goButton) {
