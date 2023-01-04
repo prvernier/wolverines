@@ -21,13 +21,6 @@ tm_basemap(leaflet::providers$Esri.WorldImagery)
 
 shinybusy::use_busy_spinner()
 
-## Load Data
-# grid <- st_read('data/wolverines.gpkg', 'grid5k', quiet = T)
-# linear <- st_read("data/wolverines.gpkg", "linear_features", quiet=T)
-# areal <- st_read("data/wolverines.gpkg", "areal_features", quiet=T)
-# factors <- st_read("data/wolverines.gpkg", "survey_factors", quiet=T)
-
-
 ui = dashboardPage(
   dashboardHeader(title = 'Wolverines Survey'),
   dashboardSidebar(
