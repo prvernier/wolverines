@@ -1,6 +1,7 @@
 ## Load Required Libraries
 library(shiny)
 library(sf)
+library(sp)
 library(DT)
 library(tmap)
 library(dplyr)
@@ -12,6 +13,8 @@ library(shinybusy)
 
 functionspath <- list.files(pattern = 'functions.R', full.names = T)
 source(functionspath)
+
+# clicklist <- list()
 
 ## Set up map options
 tmap_mode('view')
@@ -59,6 +62,8 @@ ui = dashboardPage(
     checkboxInput('th.settlement', label = 'Show TH Settlement Lands',
                   value = T
                  ),
+    
+    # actionButton('redraw', label = 'Redraw study boundaries')
     
     #### Clusters 
     ####
@@ -112,6 +117,7 @@ server <- function(input, output, session) {
 
   # creates the clusters once the user hits the make clusters button
   observeEvent(input$clustButton, {
+    print('clustButton clicked')
     data <- create.clusters(input, session, data)
   })
 
@@ -138,7 +144,12 @@ server <- function(input, output, session) {
     map.selected.cells(input, output, session, data)
     render.tab2(output, session, data)
   })
+  
+  observeEvent(input$map1_click, {
+    data <- modify.study.boundary(input, output, session, data)
+  })
 }
+
 
 
 

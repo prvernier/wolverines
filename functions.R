@@ -14,6 +14,16 @@ valid <- function(x) {
 # load data into reactiveValues object
 # This is essentially a list that can be passed into other functions
 load.data <- function() {
+  # initialize study area boundary
+  lats <- c(64.3, 64.3, 63.2, 63.2)
+  lons <- c(-141, -137, -137, -141)
+  df <- data.frame(lon = lons, lat = lats)
+  
+  study_boundary_init = st_as_sf(df, coords = c('lon', 'lat'), crs = 4326) %>%
+    st_transform(3578) %>%
+    summarise(geometry = st_combine(geometry)) %>%
+    st_cast('POLYGON')
+  
   data <- reactiveValues(
     grid = st_read('data/wolverines.gpkg', 'grid5k', quiet = T),
     linear = st_read('data/wolverines.gpkg', 'linear_features', quiet = T),
@@ -22,7 +32,9 @@ load.data <- function() {
     # Trondek Hwechin Traditional Territory
     thtt = st_read('data/wolverines.gpkg', 'TH_trad_territ', quiet = T),
     # And settlement lands
-    th_settlement = st_read('data/wolverines.gpkg', 'th_settlement_land', quiet = T)
+    th_settlement = st_read('data/wolverines.gpkg', 'th_settlement_land', quiet = T),
+    study_boundary = study_boundary_init,
+    clicklist = list()
   )
   
   return(data)
@@ -65,17 +77,23 @@ create.clusters <- function(input, session, data) {
   # select only factors that user wants to cluster by
   # st_drop_geometry() drops geom field from table (geom describes what type of
   # feature it is and has some numbers describing it)
-  y <- select(x, unlist(input$factors)) %>% 
+  # print('intersecting study boundary and factors')
+  y <- select(x, unlist(input$factors), id, grid_m2) %>%
+    st_intersection(data$study_boundary) %>%
+    filter(grid_m2 > 23000000) %>%
     st_drop_geometry()
   
   # Now actually cluster cells
   # kmeans() returns a list; $cluster object is a vector where the name is the
   # cell number and the value is what cluster it's in
-  clust <- kmeans(scale(y), input$clusters)$cluster
+  clust <- kmeans(scale(y$merge100_pct), input$clusters)$cluster
+  
+  # View(clust)
   # print('kmeans')
   
   # add field to x with what cluster the cell is in
   x <- x %>%
+    filter(id %in% y$id) %>%
     mutate(clusters = clust)
   # print('mutate(clusters = clust)')
   
@@ -86,6 +104,45 @@ create.clusters <- function(input, session, data) {
   # print('finished create.clusters')
   return(data)
 }
+
+modify.study.boundary <- function(input, output, session, data) {
+  print('click')
+  if (length(data$clicklist) ==4) {
+    data$clicklist <- list()
+  }
+  
+  click <- input$map1_click
+  
+  data$clicklist[[length(data$clicklist) + 1]] <- click
+  
+  if (length(data$clicklist) == 4) {
+    lats <- c(data$clicklist[[1]]$lat,
+              data$clicklist[[2]]$lat,
+              data$clicklist[[3]]$lat,
+              data$clicklist[[4]]$lat)
+    lons <- c(data$clicklist[[1]]$lng,
+              data$clicklist[[2]]$lng,
+              data$clicklist[[3]]$lng,
+              data$clicklist[[4]]$lng)
+    
+    df <- data.frame(lon = lons, lat = lats)
+    
+    study_boundary_mod = st_as_sf(df, coords = c('lon', 'lat'), crs = 4326) %>%
+      st_transform(3578) %>% 
+      summarise(geometry = st_combine(geometry)) %>%
+      st_cast('POLYGON')
+    
+    data$study_boundary <- study_boundary_mod
+    
+    tmapProxy('map1',
+              x = {tm_remove_layer(1000) + 
+                   tm_shape(data$study_boundary) + tm_borders(lwd = 5,
+                                                              zindex = 1000)})
+  }
+  
+  return(data)
+}
+
 
 render.map1 <- function(input, output, session, data) {
   if(!valid(input$inv)) {
@@ -143,7 +200,8 @@ render.map1 <- function(input, output, session, data) {
                                        zindex = 990) +
       tm_shape(data$th_settlement) + tm_fill(col = 'blue', 
                                              alpha = .5,
-                                             zindex = 1000)
+                                             zindex = 995) + 
+      tm_shape(data$study_boundary) + tm_borders(zindex = 1000)
     
     observeEvent(input$th.settlement, ignoreInit = T, {
       print('settlement button clicked')
